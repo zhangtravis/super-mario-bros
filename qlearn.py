@@ -102,9 +102,9 @@ def qLearning(env, num_episodes, discount_factor=1.0,
 env = gym_super_mario_bros.make('SuperMarioBros-v3')
 env = JoypadSpace(env, COMPLEX_MOVEMENT)
 
-before = time.now()
+# before = time.now()
 Q, stats = qLearning(env, 1000)
-print(time.now() - before)
+# print(time.now() - before)
 print(Q)
 print(stats)
 plotting.plot_episode_stats(stats)
