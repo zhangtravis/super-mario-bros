@@ -4,6 +4,7 @@ import torch
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
+from tqdm import tqdm
 
 class Agent():
   def __init__(self, output_dim, env, gamma, load_path=None, use_cuda=False, render=False):
@@ -84,7 +85,8 @@ class Agent():
       state = self.env.reset()
       ep_reward = 0
 
-      for t in range(1, 10000):
+      print(f'Episode {ep}: ')
+      for _ in tqdm(range(1, 10000)):
         state = (torch.from_numpy(state.copy()).float() / 255.).unsqueeze(0).to(self.device)
         state = torch.permute(state, (0, 3, 1, 2))
         action = self.get_action(state)
