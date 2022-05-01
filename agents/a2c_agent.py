@@ -33,7 +33,7 @@ class Agent():
 
     action = cat.sample()
 
-    self.saved_actions.append((cat.log_prob(action), value))
+    self.saved_actions.append((cat.log_prob(action), value[0]))
     return action.item()
 
   def backprop(self):
@@ -47,7 +47,6 @@ class Agent():
       td_targets.insert(0, R)
 
     td_targets = torch.tensor(td_targets)
-    td_targets = (td_targets - td_targets.mean()) / (td_targets.std())
 
     for (log_prob, value), R in zip(self.saved_actions, td_targets):
       advantage = R - value.item()
@@ -91,6 +90,7 @@ class Agent():
         state = torch.permute(state, (0, 3, 1, 2))
         action = self.get_action(state)
         state, reward, done, _ = self.env.step(action)
+        self.rewards.append(reward)
 
         if self.render:
           self.env.render()
@@ -102,6 +102,7 @@ class Agent():
       # update cumulative reward
       running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
 
+      print('Backpropagating...')
       self.backprop()
 
       print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}'.format(
