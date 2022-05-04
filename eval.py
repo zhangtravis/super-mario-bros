@@ -6,5 +6,5 @@ from agents.a2c_agent import Agent
 if __name__ == '__main__':
     env = gym_super_mario_bros.make('SuperMarioBros-v0')
     env = JoypadSpace(env, SIMPLE_MOVEMENT)
-    a2c_agent = Agent(len(SIMPLE_MOVEMENT), env, 0.01)
+    a2c_agent = Agent(len(SIMPLE_MOVEMENT), env, 0.01, load_path='model_weights/a2c_extra_conv.model')
     a2c_agent.play()

@@ -1,6 +1,7 @@
 from models.a2c import A2CNetwork
 
 import torch
+import torch.nn as nn
 import torch.nn.functional as F
 import torch.optim as optim
 from torch.distributions import Categorical
@@ -44,6 +45,7 @@ class Agent():
     policy_losses = []
     value_losses = []
     td_targets = []
+    mse = nn.MSELoss()
 
     for reward in self.rewards:
       R = reward + self.gamma * R
@@ -58,7 +60,7 @@ class Agent():
       policy_losses.append(-log_prob * advantage)
 
       # calculate critic (value) loss using L1 smooth loss
-      value_losses.append(F.smooth_l1_loss(value, torch.tensor([R])))
+      value_losses.append(mse(value, torch.tensor([R])))
 
     # reset gradients
     self.optimizer.zero_grad()
@@ -77,7 +79,8 @@ class Agent():
     torch.save(self.model.state_dict(), model_path)
 
   def load_model(self, model_path):
-    self.model.load_state_dict(torch.load(model_path)).to(self.device)
+    self.model.load_state_dict(torch.load(model_path))
+    self.model = self.model.to(self.device)
 
   def train(self, num_episodes):
     running_reward = 1
@@ -121,7 +124,7 @@ class Agent():
       state = self.env.reset()
       ep_reward = 0
 
-      print(f'Episode {ep}: ')
+      # print(f'Episode {ep}: ')
       for _ in tqdm(range(1, 10000)):
         with torch.no_grad():
           state = (torch.from_numpy(state.copy()).float() / 255.).unsqueeze(0).to(self.device)
@@ -136,12 +139,12 @@ class Agent():
           if done:
             break
 
-        # update cumulative reward
-        running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
+      # update cumulative reward
+      running_reward = 0.05 * ep_reward + (1 - 0.05) * running_reward
 
-        print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}'.format(
-              ep, ep_reward, running_reward))
-        ep += 1
+      print('Episode {}\tLast reward: {:.2f}\tAverage reward: {:.2f}'.format(
+            ep, ep_reward, running_reward))
+      ep += 1
 
 
   
