@@ -1,4 +1,3 @@
-import torch
 import torch.nn as nn
 
 
@@ -35,18 +34,17 @@ class A2CNetwork(nn.Module):
                       stride=2)
         )
 
-        self.reduce = nn.Sequential(
-            nn.Linear(1920, 512), nn.ReLU(inplace=True))
+        self.lstm = nn.LSTMCell(1920, 512)
 
         self.actor = nn.Linear(512, output_dim)
         self.critic = nn.Linear(512, 1)
 
-    def forward(self, x):
+    def forward(self, x, hx, cx):
         features = self.convBlock(x)
-        features = features.view(features.size(0), -1)
-        features = self.reduce(features)
+        features = features.reshape(features.size(0), -1)
+        hx, cx = self.lstm(features, (hx, cx))
 
-        policy = self.actor(features)
-        value = self.critic(features)
+        policy = self.actor(hx)
+        value = self.critic(hx)
 
-        return policy, value
+        return policy, value, hx, cx

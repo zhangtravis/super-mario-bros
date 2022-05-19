@@ -1,3 +1,4 @@
+from gym import Env
 from models.ppo import PPO
 
 import torch
@@ -9,7 +10,7 @@ from tqdm import tqdm
 
 class Agent():
   def __init__(self, output_dim, env, gamma, tau, lr, eps=0.2, local_steps=512, num_epochs=10, 
-  batch_size=16, load_path=None, use_cuda=False, render=False):
+  batch_size=16, load_path=None, use_cuda=False, render=True):
     self.env = env
     self.use_cuda = use_cuda
     self.device = torch.device('cuda' if use_cuda else 'cpu')
@@ -45,7 +46,7 @@ class Agent():
     self.entropy = cat.entropy()
 
     self.saved_actions.append((cat.log_prob(action), value[0]))
-    return action.item(), policy
+    return action.item()
 
   def backprop(self):
     R = 0
@@ -86,15 +87,15 @@ class Agent():
     torch.save(self.model.state_dict(), model_path)
 
   def load_model(self, model_path):
-    self.model.load_state_dict(torch.load(model_path))
+    self.model.load_state_dict(torch.load(model_path, map_location=self.device))
     self.model = self.model.to(self.device)
 
   def train(self, num_episodes):
     running_reward = 1
 
     print('Training...')
+    state = self.env.reset()
     for ep in range(num_episodes):
-      state = self.env.reset()
       ep_reward = 0
 
       old_log_policies = []
@@ -122,6 +123,10 @@ class Agent():
 
         # print(action)
         state, reward, done, _ = self.env.step(action.item())
+        if done:
+          state = self.env.reset()
+        if self.render:
+          self.env.render()
         rewards.append(reward)
         dones.append(done)
 
@@ -177,6 +182,8 @@ class Agent():
               torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5)
               self.optimizer.step()
       print("Episode: {}. Total loss: {}".format(ep, total_loss))
+      state = torch.permute(state, (0, 2, 3, 1))
+      state = state.cpu().squeeze().numpy()
 
       self.save_model('model_weights/ppo/ppo.model')
 
