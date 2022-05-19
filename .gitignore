@@ -1,3 +1,9 @@
+# PyTorch files
+*.pkl
+*.p
+*.pt
+*.pth
+
 .history
 .python-version
 __pycache__
