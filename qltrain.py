@@ -14,11 +14,11 @@ import matplotlib.pyplot as plt
 
 # Credits to this blog paper:
 # https://blog.paperspace.com/building-double-deep-q-network-super-mario-bros/
-# Code:
+# Code (sampled and modified for this project):
 # https://ml-showcase.paperspace.com/projects/super-mario-bros-double-deep-q-network
 
-class MaxAndSkipEnv(gym.Wrapper):
 
+class MaxAndSkipEnv(gym.Wrapper):
     def __init__(self, env=None, skip=4):
         """Return only every `skip`-th frame"""
         super(MaxAndSkipEnv, self).__init__(env)
@@ -53,7 +53,6 @@ class ProcessFrame84(gym.ObservationWrapper):
 
     Returns numpy array
     """
-
     def __init__(self, env=None):
         super(ProcessFrame84, self).__init__(env)
         self.observation_space = gym.spaces.Box(low=0,
@@ -79,7 +78,6 @@ class ProcessFrame84(gym.ObservationWrapper):
 
 
 class ImageToPyTorch(gym.ObservationWrapper):
-
     def __init__(self, env):
         super(ImageToPyTorch, self).__init__(env)
         old_shape = self.observation_space.shape
@@ -96,13 +94,11 @@ class ImageToPyTorch(gym.ObservationWrapper):
 
 class ScaledFloatFrame(gym.ObservationWrapper):
     """Normalize pixel values in frame --> 0 to 1"""
-
     def observation(self, obs):
         return np.array(obs).astype(np.float32) / 255.0
 
 
 class BufferWrapper(gym.ObservationWrapper):
-
     def __init__(self, env, n_steps, dtype=np.float32):
         super(BufferWrapper, self).__init__(env)
         self.dtype = dtype
@@ -134,7 +130,6 @@ def make_env(env):
 
 
 class DQNSolver(nn.Module):
-
     def __init__(self, input_shape, n_actions):
         super(DQNSolver, self).__init__()
         self.conv = nn.Sequential(
@@ -156,7 +151,6 @@ class DQNSolver(nn.Module):
 
 
 class DQNAgent:
-
     def __init__(self, state_space, action_space, max_memory_size, batch_size,
                  gamma, lr, dropout, exploration_max, exploration_min,
                  exploration_decay, double_dq, pretrained):
@@ -248,8 +242,6 @@ class DQNAgent:
         return STATE, ACTION, REWARD, STATE2, DONE
 
     def act(self, state):
-        # Epsilon-greedy action
-
         if self.double_dq:
             self.step += 1
         if random.random() < self.exploration_rate:
@@ -264,7 +256,6 @@ class DQNAgent:
 
     def copy_model(self):
         # Copy local net weights into target net
-
         self.target_net.load_state_dict(self.local_net.state_dict())
 
     def experience_replay(self):
@@ -311,7 +302,6 @@ class DQNAgent:
 
 def vectorize_action(action, action_space):
     # Given a scalar action, return a one-hot encoded action
-
     return [0 for _ in range(action)
             ] + [1] + [0 for _ in range(action + 1, action_space)]
 
@@ -323,12 +313,11 @@ def show_state(env, ep=0, info=""):
     plt.title("Episode: %d %s" % (ep, info))
     plt.axis('off')
 
-    display.clear_output(wait=True)
-    display.display(plt.gcf())
+    # display.clear_output(wait=True)
+    # display.display(plt.gcf())
 
 
 def run(training_mode, pretrained):
-
     env = gym_super_mario_bros.make('SuperMarioBros-1-1-v0')
     env = make_env(env)  # Wraps the environment so that frames are grayscale
     observation_space = env.observation_space.shape
@@ -343,10 +332,10 @@ def run(training_mode, pretrained):
                      exploration_max=1.0,
                      exploration_min=0.02,
                      exploration_decay=0.99,
-                     double_dq=True,
+                     double_dq=False,
                      pretrained=pretrained)
 
-    num_episodes = 10000
+    num_episodes = 1000
     env.reset()
     total_rewards = []
 
@@ -363,6 +352,7 @@ def run(training_mode, pretrained):
 
             state_next, reward, terminal, info = env.step(int(action[0]))
             total_reward += reward
+            env.render()
             state_next = torch.Tensor([state_next])
             reward = torch.tensor([reward]).unsqueeze(0)
 
@@ -409,5 +399,4 @@ def run(training_mode, pretrained):
         plt.show()
 
 
-run(training_mode=True, pretrained=False)
-
+run(training_mode=True, pretrained=True)

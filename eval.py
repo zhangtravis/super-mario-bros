@@ -8,7 +8,6 @@ import sys
 import time
 
 
-# Same as duel_dqn.mlp (you can make model.py to avoid duplication.)
 class model(nn.Module):
 
     def __init__(self, n_frame, n_action, device):
